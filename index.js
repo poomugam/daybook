@@ -13,7 +13,7 @@ db.connect('data/', ['activity']); // connect db and load collection
 app.use(express.static(__dirname));
 
 app.get('/', function(request, response) {
-  response.sendFile(path.join(__dirname + '/app/index.html'));
+  response.sendFile(path.join(__dirname + '/index.html'));
 });
 
 var router = express.Router();              // get an instance of the express Router
