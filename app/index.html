@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="daybook">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Daybook</title>
+
+    <!-- Material Design fonts -->
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/icon?family=Material+Icons">
+
+
+    <link rel="stylesheet" type="text/css" href="app.css">
+
+</head>
+
+<body>
+        <div>
+            <div id="container" ng-controller="activityController">
+            <div class="row activity_entry">
+
+                <div class="col s12 z-depth-3">
+                    <div class="s1 chip teal">
+                        <span>12.12PM</span>
+                    </div>
+                    <div class="input-field inline">
+                        <div class="input-field inline">
+                            <ul id="activity_type" class="dropdown-content">
+                                <li><a href="#!">Spent</a></li>
+                                <li><a href="#!">Received</a></li>
+                            </ul>
+                            <a class="btn dropdown-button" data-activates="activity_type">
+                                Spent
+                            </a>
+                        </div>
+                        <span>$</span>
+                        <div class="input-field inline">
+                            <input type="text" id="activity_amount" class="validate" placeholder="Amount" v-model="activity.amount">
+                        </div>
+                        <span>for</span>
+                        <div class="input-field inline">
+                            <ul id="activity_for" class="dropdown-content">
+                                <li><a href="#!">Food</a></li>
+                                <li><a href="#!">Groceries</a></li>
+                            </ul>
+                            <a class="btn dropdown-button amber" data-activates="activity_for">
+                                Food
+                            </a>
+                        </div>
+                        <span>in</span>
+                        <div class="input-field inline">
+                            <input type="text" id="activity_in" class="validate" placeholder="Location">    
+                        </div>    
+                        <span>by</span>
+                        <div class="input-field inline">
+                            <ul id="activity_by" class="dropdown-content">
+                                <li><a href="#!">Cash</a></li>
+                                <li><a href="#!">Card</a></li>
+                            </ul>
+                            <a class="btn dropdown-button blue-grey" data-activates="activity_by">
+                                Cash
+                            </a>
+                        </div>                    
+                    </div>
+                </div>                
+            </div>
+
+					
+							<div class="row">
+        <div class="col s4 m2" ng-repeat="n in activities">
+					<span class="">10:20 AM</span>
+					<div class="card-panel red accent-2">
+						<div class="card-content white-text">
+							$ 12
+							<p>FOOD</p>
+						</div>
+					</div>
+        </div>
+	
+      </div>
+					
+</div>
+					<div class="timeline_container">
+						
+<section class="timeline">
+	<div class="activity spent">
+		<div class="holder">
+			<span class="timestamp">
+				<span class="time">12.10 PM</span>
+			</span>
+			<div class="detail">
+				<p>Spent $ 12.5 for FOOD in Food Court at Paris. </p>
+			</div>
+		</div>
+	</div>
+	<div class="activity received">
+		<div class="holder">
+			<span class="timestamp">
+				<span class="time">12.10 PM</span>
+			</span>
+			<div class="detail">
+				<p>Received $ 600 for Interest in Bank at London. </p>
+			</div>
+		</div>
+	</div>
+	
+	<div class="activity spent">
+		<div class="holder">
+			<span class="timestamp">
+				<span class="time">12.10 PM</span>
+			</span>
+			<div class="detail">
+				<p>Spent $ 12.5 for FOOD in Food Court at Paris. </p>
+			</div>
+		</div>
+	</div>
+	
+	<div class="activity spent">
+		<div class="holder">
+			<span class="timestamp">
+				<span class="time">12.10 PM</span>
+			</span>
+			<div class="detail">
+				<p>Spent $ 12.5 for FOOD in Food Court at Paris. </p>
+			</div>
+		</div>
+	</div>
+</section>
+						
+					</div>
+</div>
+
+
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.min.js"></script>
+
+    <script type="text/javascript" src="app.js"></script>
+</body>
+
+</html>
