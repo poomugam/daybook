@@ -1,26 +1,31 @@
-	@import(url'http://fonts.googleapis.com/icon?family=Material+Icons')
-	.activity_entry span{
-			font-size:18px;
-			margin:20px;
-	}
-
-	.input-field.inline{
-			margin-top:0;
-	}
-
-	input[type=text]{
-			font-size:18px;
-	}
-
 
 html, body {margin: 0; padding: 0;font-family: Helvetica, sans-serif;}
+body{
+	background-color:#50565d;
+}
 
-.timeline_container
-{
+.activity_entry{
+	background-color:#f2f2f2;
+}
+.activity_entry span{
+		font-size:16px;
+		margin:20px;
+}
+
+.input-field.inline{
+		margin-top:0;
+}
+
+input[type=text]{
+		font-size:18px;
+}
+
+.timeline_container{
 	height:80%;
 	position:relative;
-	background:#4C668C;
+	overflow:auto;
 }
+
 section.timeline{
 	width:80%;
 	margin:50px auto;
@@ -66,23 +71,25 @@ section.timeline:before{
   font-weight: 900;
   text-transform: uppercase;
 	text-align:center;
-  background: #054666;
-  color: #FF6159;
+  background: #50565d;
+  color: #d6d4c0;
+}
+
+.received .timestamp{
+	color:#d6d4c0;
 }
 
 .timestamp .time{
 	display:block;
 	position:relative;
   text-align: center;
-	top:3px;
+	top:2px;
 }
 
-.received .timestamp{
-	color:#98E35A;
-}
 
 .activity .detail {
-	postion:relative;
+	position:relative;
+	display:inline-block;
 	min-height:20px;
 	font-size:14px;
 	padding:5px 10px;
@@ -100,7 +107,7 @@ section.timeline:before{
   content: '';
   position: absolute;
 	top:6px;
-	left:32px;
+	left:-13px;
 	width: 8px; 
 	height: 8px;
   -webkit-transform: rotate(-45deg);
@@ -111,7 +118,7 @@ section.timeline:before{
   content: '';
   position: absolute;
 	top:6px;
-	left:32px;
+	left:-13px;
 	width: 8px; 
 	height: 8px;
   -webkit-transform: rotate(-45deg);

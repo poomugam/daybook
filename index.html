@@ -8,140 +8,83 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
     <meta name="author" content="">
-
     <title>Daybook</title>
-
     <!-- Material Design fonts -->
     <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">
-    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/icon?family=Material+Icons">
-
-
+    <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" type="text/css" href="/app/app.css">
-
 </head>
 
 <body>
-        <div>
-            <div id="container" ng-controller="activityController">
-            <div class="row activity_entry">
-
-                <div class="col s12 z-depth-3">
-                    <div class="s1 chip teal">
-                        <span>12.12PM</span>
+    <div id="container" ng-controller="activityController" ng-init="init()">
+        <div class="row date_selection">
+            <div class="col s12 blue-grey lighten-5">
+                <div class="input-field inline">
+                    <input type="date" class="validate" placeholder="Amount" ng-model="activity.timestamp">
+                </div>
+            </div>
+        </div>
+        <div class="row activity_entry">
+            <div class="col s12 z-depth-3">
+                <div class="input-field inline">
+                    <div class="input-field inline">
+                        <ul id="activity_type" class="dropdown-content">
+                            <li ng-repeat="c in categories"><a ng-click="activity.category = c">{{c}}</a></li>
+                        </ul>
+                        <a class="btn dropdown-button" ng-class="activity.category=='Spent'?'red':'green'" data-activates="activity_type">{{activity.category}}</a>
+                    </div>
+                    <span>$</span>
+                    <div class="input-field inline">
+                        <input type="text" id="activity_amount" class="validate" placeholder="Amount" ng-model="activity.amount">
+                    </div>
+                    <span>for</span>
+                    <div class="input-field inline">
+                        <ul id="activity_for" class="dropdown-content">
+                            <li ng-repeat="f in for_types"><a ng-click="activity.for = f">{{f}}</a></li>
+                        </ul>
+                        <a class="btn dropdown-button amber" data-activates="activity_for">{{activity.for}}</a>
+                    </div>
+                    <span>in</span>
+                    <div class="input-field inline">
+                        <input type="text" id="activity_in" class="validate" placeholder="Location" ng-model="activity.in">
+                    </div>
+                    <span>by</span>
+                    <div class="input-field inline">
+                        <ul id="activity_by" class="dropdown-content">
+                            <li ng-repeat="pt in payment_types"><a ng-click="activity.by = pt">{{pt}}</a></li>
+                        </ul>
+                        <a class="btn dropdown-button blue-grey" data-activates="activity_by">{{activity.by}}</a>
                     </div>
                     <div class="input-field inline">
-                        <div class="input-field inline">
-                            <ul id="activity_type" class="dropdown-content">
-                                <li><a href="#!">Spent</a></li>
-                                <li><a href="#!">Received</a></li>
-                            </ul>
-                            <a class="btn dropdown-button" data-activates="activity_type">
-                                Spent
-                            </a>
-                        </div>
-                        <span>$</span>
-                        <div class="input-field inline">
-                            <input type="text" id="activity_amount" class="validate" placeholder="Amount" v-model="activity.amount">
-                        </div>
-                        <span>for</span>
-                        <div class="input-field inline">
-                            <ul id="activity_for" class="dropdown-content">
-                                <li><a href="#!">Food</a></li>
-                                <li><a href="#!">Groceries</a></li>
-                            </ul>
-                            <a class="btn dropdown-button amber" data-activates="activity_for">
-                                Food
-                            </a>
-                        </div>
-                        <span>in</span>
-                        <div class="input-field inline">
-                            <input type="text" id="activity_in" class="validate" placeholder="Location">    
-                        </div>    
-                        <span>by</span>
-                        <div class="input-field inline">
-                            <ul id="activity_by" class="dropdown-content">
-                                <li><a href="#!">Cash</a></li>
-                                <li><a href="#!">Card</a></li>
-                            </ul>
-                            <a class="btn dropdown-button blue-grey" data-activates="activity_by">
-                                Cash
-                            </a>
-                        </div>                    
+                        <a class="btn-floating btn-large waves-effect waves-light green" ng-click="addActivity()">
+                            <i class="large material-icons">done</i>
+                        </a>
                     </div>
-                </div>                
+                </div>
             </div>
-
-					
-							<div class="row">
-        <div class="col s4 m2" ng-repeat="n in activities">
-					<span class="">10:20 AM</span>
-					<div class="card-panel red accent-2">
-						<div class="card-content white-text">
-							$ 12
-							<p>FOOD</p>
-						</div>
-					</div>
         </div>
-	
-      </div>
-					
-</div>
-					<div class="timeline_container">
-						
-<section class="timeline">
-	<div class="activity spent">
-		<div class="holder">
-			<span class="timestamp">
-				<span class="time">12.10 PM</span>
-			</span>
-			<div class="detail">
-				<p>Spent $ 12.5 for FOOD in Food Court at Paris. </p>
-			</div>
-		</div>
-	</div>
-	<div class="activity received">
-		<div class="holder">
-			<span class="timestamp">
-				<span class="time">12.10 PM</span>
-			</span>
-			<div class="detail">
-				<p>Received $ 600 for Interest in Bank at London. </p>
-			</div>
-		</div>
-	</div>
-	
-	<div class="activity spent">
-		<div class="holder">
-			<span class="timestamp">
-				<span class="time">12.10 PM</span>
-			</span>
-			<div class="detail">
-				<p>Spent $ 12.5 for FOOD in Food Court at Paris. </p>
-			</div>
-		</div>
-	</div>
-	
-	<div class="activity spent">
-		<div class="holder">
-			<span class="timestamp">
-				<span class="time">12.10 PM</span>
-			</span>
-			<div class="detail">
-				<p>Spent $ 12.5 for FOOD in Food Court at Paris. </p>
-			</div>
-		</div>
-	</div>
-</section>
-						
-					</div>
-</div>
+        <div class="timeline_container">
+            <section class="timeline">
+                <div class="activity" ng-class="act.category | lowercase" ng-repeat="act in activities">
+                    <div class="holder">
+                        <span class="timestamp">
+				            <span class="time">{{act.timestamp | date:'h:mm a'}}</span>
+                        </span>
+                        <div class="detail">
+                            <p>{{act.category}} {{act.amount | currency }} {{act.for ? 'for '+act.for : ''}} {{act.in ? 'in '+act.in : ''}}  by {{act.by}}. </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
 
 
 
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.min.js"></script>
-
     <script type="text/javascript" src="/app/app.js"></script>
 </body>
 
