@@ -15,6 +15,8 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var ActivitySchema = new Schema({
+    "token":String,
+    "date":String,
 	"timestamp":Number,
 	"category":String,
 	"amount":Number,
@@ -26,7 +28,7 @@ var ActivitySchema = new Schema({
 
 var Activity = mongoose.model('Activity',ActivitySchema);
 
-
+// mongo db connection
 var options = { server: { socketOptions: { keepAlive: 300000, connectTimeoutMS: 30000 } }, 
                 replset: { socketOptions: { keepAlive: 300000, connectTimeoutMS : 30000 } } };       
 var mongodbUri = 'mongodb://heroku_zjzb59nk:llsgih1ktiqta1h77n5dg11vkr@ds145138.mlab.com:45138/heroku_zjzb59nk';
@@ -35,6 +37,14 @@ var conn = mongoose.connection;
 conn.on('error', console.error.bind(console, 'connection error:'));  
 conn.once('open', function() {
   // Wait for the database connection to establish, then start the app.       
+    bootstrapApp();
+}.bind(this));
+// mongo db connection
+
+// bootstrapApp(); //need to comment above mongo db code
+
+function bootstrapApp(){
+
 
     console.log("Mongodb connection established...");   
 
@@ -48,23 +58,22 @@ conn.once('open', function() {
 
     var router = express.Router();              // get an instance of the express Router
 
-    router.get('/activity', function(req, res) {
-        Activity.find().sort('-timestamp').exec((err, activities) => {
+    router.get('/activity/:date', function(req, res) {
+        Activity.find({token:req.query.token,date:req.params.date}).sort('-timestamp').exec((err, activities) => {
             if (err) return console.error(err);
             console.log(activities);
             res.json(activities || []);
         })
     });
 
-    router.get('/activity/:id', function(req, res) {
-        Activity.findOne({_id:req.params.id}).exec((err,activity)=>{
-            res.json(activity || {});
-        });
-    });
+    // router.get('/activity/:id', function(req, res) {
+    //     Activity.findOne({_id:req.params.id}).exec((err,activity)=>{
+    //         res.json(activity || {});
+    //     });
+    // });
 
     router.post('/activity/add', function(req, res) {
         var activity = new Activity(req.body);
-
         activity.save(function (err) {
             if (err) {
                 console.log("error");
@@ -90,17 +99,28 @@ conn.once('open', function() {
     //     res.json({"status":"success","data":result});  
     // });
 
-    // router.post('/activity/delete',function(req, res){
-    //     var data = req.body;
-    //     var result = db.activity.remove({_id:data._id},false);
-    //     res.json({"status":"success","data":result})
-    // });
+    router.post('/activity/delete',function(req, res){
+        var data = req.body;
+        Activity.findByIdAndRemove(req.params.id || data._id, function (err, activity) {  
+            var response = {
+                message: "success",
+                id: activity._id
+            };
+            res.send(response);
+        });
+    });
 
-    // router.post('/activity/delete/:id',function(req, res){
-    //     var data = req.body;
-    //     var result = db.activity.remove({_id:req.params.id || data._id},false);
-    //     res.json({"status":"success","data":result})
-    // });
+    router.post('/activity/delete/:id',function(req, res){
+        var data = req.body;
+
+        Activity.findByIdAndRemove(req.params.id || data._id, function (err, activity) {  
+            var response = {
+                message: "success",
+                id: activity._id
+            };
+            res.send(response);
+        });
+    });
 
     app.use('/api',router);
 
@@ -112,9 +132,7 @@ conn.once('open', function() {
     app.listen(app.get('port'), function() {
         console.log('Node app is running on port', app.get('port'));
     });
-
-}.bind(this));
-
+}
 // Mongoose connection
 
 

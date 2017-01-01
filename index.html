@@ -12,20 +12,117 @@
     <!-- Material Design fonts -->
     <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">
     <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+
+
+    <link rel="stylesheet" type="text/css" href="/app/datepicker.css">
+
     <link rel="stylesheet" type="text/css" href="/app/app.css">
+
 </head>
 
 <body>
-    <div id="container" ng-controller="activityController" ng-init="init()">
-        <div class="row date_selection">
+    <div id="container" ng-controller="activityController" ng-init="init()" ng-cloak>
+        <div class="card-panel z-depth-3">
+            <a class="btn-floating waves-effect waves-light green align-center" ng-click="getActivities()">
+                <i class="material-icons">refresh</i>
+            </a>
+            <input type="text" id="activity_token" class="validate" placeholder="token" ng-model="token">
+        </div>
+        <div class="row date_selection datepicker-container">
             <div class="col s12 blue-grey lighten-5">
-                <div class="input-field inline">
-                    <input type="date" class="validate" placeholder="Amount" ng-model="activity.timestamp">
+                <div date-picker
+                    datepicker-title="Select Date"
+                    picktime="true"
+                    pickdate="true"
+                    pickpast="true"
+                    mondayfirst="false"
+                    custom-message="You have selected"
+                    selecteddate="activity.timestamp"
+                    updatefn="updateDate(newdate)">
+                
+                    <div class="datepicker"
+                        ng-class="{
+                            'am': timeframe == 'am',
+                            'pm': timeframe == 'pm',
+                            'compact': compact
+                        }">
+
+                        <div class="datepicker-calendar">
+                            <div class="calendar-header">
+                                <div class="goback" ng-click="moveBack()" ng-if="pickdate">
+                                    <svg width="30" height="30">
+                                        <path fill="none" stroke="#0DAD83" stroke-width="3" d="M19,6 l-9,9 l9,9"/>
+                                    </svg>
+                                </div>
+                                <div class="current-month-container">{{ currentViewDate.getFullYear() }} {{ currentMonthName() }}</div>
+                                <div class="goforward" ng-click="moveForward()" ng-if="pickdate">
+                                    <svg width="30" height="30">
+                                        <path fill="none" stroke="#0DAD83" stroke-width="3" d="M11,6 l9,9 l-9,9" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="calendar-day-header">
+                                <span ng-repeat="day in days" class="day-label">{{ day.short }}</span>
+                            </div>
+                            <div class="calendar-grid" ng-class="{false: 'no-hover'}[pickdate]">
+                                <div
+                                    ng-class="{'no-hover': !day.showday}"
+                                    ng-repeat="day in month track by $index"
+                                    class="datecontainer"
+                                    ng-style="{'margin-left': calcOffset(day, $index)}">
+                                    <div class="datenumber" ng-class="{'day-selected': day.selected }" ng-click="selectDate(day)">
+                                        {{ day.daydate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timepicker" ng-if="picktime == 'true'">
+                            <div ng-class="{'am': timeframe == 'am', 'pm': timeframe == 'pm' }">
+                                <div class="timepicker-container-outer" selectedtime="time" timetravel>
+                                    <div class="timepicker-container-inner">
+                                        <div class="timeline-container" ng-mousedown="timeSelectStart($event)" sm-touchstart="timeSelectStart($event)">
+                                            <div class="current-time">
+                                                <div class="actual-time">{{ time }}</div>
+                                            </div>
+                                            <div class="timeline">
+                                            </div>
+                                            <div class="hours-container">
+                                                <div class="hour-mark" ng-repeat="hour in getHours() track by $index"></div>
+                                            </div>
+                                        </div>
+                                        <div class="display-time">
+                                            <div class="decrement-time" ng-click="adjustTime('decrease')">
+                                                <svg width="24" height="24">
+                                                    <path stroke="white" stroke-width="2" d="M8,12 h8"/>
+                                                </svg>
+                                            </div>
+                                            <div class="time" ng-class="{'time-active': edittime.active}">
+                                                <input type="text" class="time-input" ng-model="edittime.input" ng-keydown="changeInputTime($event)" ng-focus="edittime.active = true; edittime.digits = [];" ng-blur="edittime.active = false"/>
+                                                <div class="formatted-time">{{ edittime.formatted }}</div>
+                                            </div>
+                                            <div class="increment-time" ng-click="adjustTime('increase')">
+                                                <svg width="24" height="24">
+                                                    <path stroke="white" stroke-width="2" d="M12,7 v10 M7,12 h10"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="am-pm-container">
+                                            <div class="am-pm-button" ng-click="changetime('am');">am</div>
+                                            <div class="am-pm-button" ng-click="changetime('pm');">pm</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="row activity_entry">
             <div class="col s12 z-depth-3">
+                <div class="activity-date-header valign-wrapper" >
+                    <h3 class="activity-date-stamp">{{ activitydate| date:'EEEE MMM d, y h:mm a' }}</h3>
+                </div>
                 <div class="input-field inline">
                     <div class="input-field inline">
                         <ul id="activity_type" class="dropdown-content">
@@ -37,14 +134,14 @@
                     <div class="input-field inline">
                         <input type="text" id="activity_amount" class="validate" placeholder="Amount" ng-model="activity.amount">
                     </div>
-                    <span>for</span>
+                    <span>{{activity.category=='Spent'?'for':'as'}}</span>
                     <div class="input-field inline">
                         <ul id="activity_for" class="dropdown-content">
                             <li ng-repeat="f in for_types"><a ng-click="activity.for = f">{{f}}</a></li>
                         </ul>
                         <a class="btn dropdown-button amber" data-activates="activity_for">{{activity.for}}</a>
                     </div>
-                    <span>in</span>
+                    <span>{{activity.category=='Spent'?'in':'from'}}</span>
                     <div class="input-field inline">
                         <input type="text" id="activity_in" class="validate" placeholder="Location" ng-model="activity.in">
                     </div>
@@ -63,20 +160,53 @@
                 </div>
             </div>
         </div>
-        <div class="timeline_container">
-            <section class="timeline">
-                <div class="activity" ng-class="act.category | lowercase" ng-repeat="act in activities">
-                    <div class="holder">
-                        <span class="timestamp">
-				            <span class="time">{{act.timestamp | date:'h:mm a'}}</span>
-                        </span>
-                        <div class="detail">
-                            <p>{{act.category}} {{act.amount | currency }} {{act.for ? 'for '+act.for : ''}} {{act.in ? 'in '+act.in : ''}}  by {{act.by}}. </p>
+        <div class="row">
+            <div class="col s12 m8 timeline_container">
+                <section class="timeline" ng-if="activities.length > 0">
+                    <div class="activity" ng-class="act.category | lowercase" ng-repeat="act in activities">
+                        <div class="holder">
+                            <span class="timestamp">
+                                <span class="time">{{act.timestamp | date:'h:mm a'}}</span>
+                            </span>
+                            <div class="detail" ng-init="act.showAction = false" ng-mouseover="act.showAction = true" ng-mouseleave="act.showAction = false">
+                                <p>
+                                    
+                                    {{act.category}} {{act.amount | currency }} {{act.for ? 'for '+act.for : ''}} {{act.in ? 'in '+act.in : ''}}  by {{act.by}}. 
+
+                                    <a class="btn-floating btn-small waves-effect waves-light red" ng-if="act.showAction" ng-click="deleteActivity(act)">
+                                        <i class="medium material-icons">delete</i>
+                                    </a>
+                                </p>
+
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <div class="col s12 m4 activity_summary_container" ng-hide="true">
+                <div class="row">
+                    <div class="col s12 m6">
+                        <div class="card grey darken-1">
+                            <div class="card-content white-text">
+                                <span class="card-title">Activity Summary</span>
+                            </div>
+                            <div class="card-action inline">
+                                <a class="btn-large red">$ 0</a>
+
+                                <a class="btn-large green">$ 0</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
+                <div class="row"><svg version="1.1" class="highcharts-root" style="font-family:'Unica One', sans-serif;font-size:12px;" xmlns="http://www.w3.org/2000/svg" width="600" height="400"><desc>Summary</desc><defs><linearGradient x1="0" y1="0" x2="1" y2="1" id="highcharts-y5clw4k-1"><stop offset="0" stop-color="#2a2a2b" stop-opacity="1"></stop><stop offset="1" stop-color="#3e3e40" stop-opacity="1"></stop></linearGradient><clipPath id="highcharts-y5clw4k-2"><rect x="0" y="0" width="580" height="286" fill="none"></rect></clipPath></defs><rect fill="" class="highcharts-background" x="0" y="0" width="600" height="400" rx="0" ry="0"></rect><rect fill="grey" class="highcharts-plot-background" x="10" y="48" width="580" height="286"></rect><rect fill="none" class="highcharts-plot-border" x="10" y="48" width="580" height="286"></rect><g class="highcharts-series-group "><g class="highcharts-series highcharts-series-0 highcharts-pie-series highcharts-color-undefined highcharts-tracker highcharts-series-hover" transform="translate(10,48) scale(1 1)" style="cursor:pointer;"><path fill="#2b908f" d="M 289.9708747318716 0.0000029660183713531296 A 143 143 0 1 1 218.92086629580615 267.0836683526939 L 223.89143508630923 258.4064887476104 A 133 133 0 1 0 289.97291146390853 10.000002758604495 Z" class="highcharts-halo highcharts-color-0" fill-opacity="0.25"></path><path fill="rgb(68,169,168)" d="M 289.97291146390853 10.000002758604495 A 133 133 0 1 1 223.89143508630923 258.4064887476104 L 290 143 A 0 0 0 1 0 290 143 Z" class="highcharts-point highcharts-color-0 highcharts-point-hover" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#90ee7e" d="M 223.77606167107575 258.3403224904753 A 133 133 0 0 1 174.08161983952954 77.7931817907617 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-point-select highcharts-color-1" transform="translate(-10,3)" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#f45b5b" d="M 174.14688460605623 77.67729603332735 A 133 133 0 0 1 240.24928057601113 19.655499041118432 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-color-2" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#7798BF" d="M 240.37264993177027 19.605810002231564 A 133 133 0 0 1 280.2480250418835 10.358004446494135 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-color-3 " stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#aaeeee" d="M 280.38067189131715 10.348318794153585 A 133 133 0 0 1 288.0863316456265 10.01376810575664 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-color-4 " stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#ff0066" d="M 288.2193188121905 10.011920930831621 A 133 133 0 0 1 289.81526566823646 10.000128296202206 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-color-5 " stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path></g><g class="highcharts-markers highcharts-series-0 highcharts-pie-series highcharts-color-undefined highcharts-series-hover" transform="translate(10,48) scale(1 1)"></g></g><g class="highcharts-button highcharts-contextbutton" style="cursor:pointer;" stroke-linecap="round" transform="translate(566,10)"><title></title><rect fill="#505053" class=" highcharts-button-box" x="0.5" y="0.5" width="24" height="22" rx="2" ry="2" stroke="none" stroke-width="1"></rect><path fill="#666666" d="M 6 6.5 L 20 6.5 M 6 11.5 L 20 11.5 M 6 16.5 L 20 16.5" class="highcharts-button-symbol" stroke="#DDDDDD" stroke-width="3"></path><text x="0" style="font-weight:normal;color:#333333;fill:#333333;" y="12"></text></g><text x="300" text-anchor="middle" class="highcharts-title" style="color:#E0E0E3;font-size:20px;text-transform:uppercase;fill:#E0E0E3;width:536px;" y="25"><tspan></tspan></text><g class="highcharts-legend" transform="translate(63,346)"><rect fill="none" class="highcharts-legend-box" rx="0" ry="0" x="0" y="0" width="473" height="39" visibility="visible"></rect><g><g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-0" transform="translate(8,3)"><text x="21" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start" y="15"><tspan></tspan></text><rect x="2" y="4" width="12" height="12" fill="#2b908f" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-1" transform="translate(188.390625,3)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start"></text><rect x="2" y="4" width="12" height="12" fill="#90ee7e" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-2" transform="translate(267.859375,3)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start"></text><rect x="2" y="4" width="12" height="12" fill="#f45b5b" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-3" transform="translate(344.390625,3)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start">Safari</text><rect x="2" y="4" width="12" height="12" fill="#7798BF" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-4" transform="translate(416.375,3)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start"></text><rect x="2" y="4" width="12" height="12" fill="#aaeeee" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-5" transform="translate(8,17)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start"><tspan></tspan></text><rect x="2" y="4" width="12" height="12" fill="#ff0066" rx="6" ry="6" class="highcharts-point"></rect></g></g></g></g><text x="590" class="highcharts-credits" text-anchor="end" style="cursor:pointer;color:#666;font-size:9px;fill:#666;" y="395">H/text><g class="highcharts-label highcharts-tooltip highcharts-color-0" style="cursor:default;pointer-events:none;white-space:nowrap;" transform="translate(337,255)" opacity="1" visibility="visible"><path fill="none" class="highcharts-label-box highcharts-tooltip-box" d="M 3.5 0.5 L 129.5 0.5 C 132.5 0.5 132.5 0.5 132.5 3.5 L 132.5 40.5 C 132.5 43.5 132.5 43.5 129.5 43.5 L 3.5 43.5 C 0.5 43.5 0.5 43.5 0.5 40.5 L 0.5 3.5 C 0.5 0.5 0.5 0.5 3.5 0.5" isShadow="true" stroke="#000000" stroke-opacity="0.049999999999999996" stroke-width="5" transform="translate(1, 1)"></path><path fill="none" class="highcharts-label-box highcharts-tooltip-box" d="M 3.5 0.5 L 129.5 0.5 C 132.5 0.5 132.5 0.5 132.5 3.5 L 132.5 40.5 C 132.5 43.5 132.5 43.5 129.5 43.5 L 3.5 43.5 C 0.5 43.5 0.5 43.5 0.5 40.5 L 0.5 3.5 C 0.5 0.5 0.5 0.5 3.5 0.5" isShadow="true" stroke="#000000" stroke-opacity="0.09999999999999999" stroke-width="3" transform="translate(1, 1)"></path><path fill="none" class="highcharts-label-box highcharts-tooltip-box" d="M 3.5 0.5 L 129.5 0.5 C 132.5 0.5 132.5 0.5 132.5 3.5 L 132.5 40.5 C 132.5 43.5 132.5 43.5 129.5 43.5 L 3.5 43.5 C 0.5 43.5 0.5 43.5 0.5 40.5 L 0.5 3.5 C 0.5 0.5 0.5 0.5 3.5 0.5" isShadow="true" stroke="#000000" stroke-opacity="0.15" stroke-width="1" transform="translate(1, 1)"></path><path fill="rgba(0, 0, 0, 0.85)" class="highcharts-label-box highcharts-tooltip-box" d="M 3.5 0.5 L 129.5 0.5 C 132.5 0.5 132.5 0.5 132.5 3.5 L 132.5 40.5 C 132.5 43.5 132.5 43.5 129.5 43.5 L 3.5 43.5 C 0.5 43.5 0.5 43.5 0.5 40.5 L 0.5 3.5 C 0.5 0.5 0.5 0.5 3.5 0.5" stroke="#2b908f" stroke-width="1"></path><text x="8" style="font-size:12px;color:#F0F0F0;fill:#F0F0F0;" y="20"><tspan style="font-size: 10px"> </tspan><tspan x="8" dy="15"></tspan><tspan style="font-weight:bold" dx="0">58.3%</tspan></text></g></svg>
+                </div>
+            </div>
+
+
         </div>
+
+
     </div>
 
 
