@@ -91,7 +91,7 @@ function bootstrapApp(){
             dt.setDate(parseInt(fdate.slice(0,2)));
             dt.setMonth(parseInt(fdate.slice(2,4))-1);
             dt.setYear(parseInt(fdate.slice(4)));
-            var dtvalue = dt.getTime + dt.getTimezoneOffset();
+            var dtvalue = dt.getTime() + dt.getTimezoneOffset();
             
             var ltCurrentDate = function(obj){
                 return obj.timestamp < dtvalue;
