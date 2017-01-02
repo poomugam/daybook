@@ -38,6 +38,18 @@ input[type=text]{
 		font-size:18px;
 }
 
+.input-field .material-icons.prefix{
+	font-size: 1.2rem;
+	font-weight: 600;
+	text-align: center;
+	width:1.4rem;
+	margin-top: 1rem;
+}
+.input-field .material-icons.prefix ~input{
+	margin-left:1.2rem;
+}
+
+
 .timeline_container{
 	position:relative;
 }
@@ -72,6 +84,15 @@ section.timeline:before{
   width: 80%;
 	min-width:80px;
   margin: 0 0 0 36px;
+}
+
+.autocomplete-content{
+	position:absolute !important;
+}
+
+.autocomplete-content span{
+	margin:0;
+	padding:0;
 }
 
 .activity .timestamp{
@@ -115,9 +136,30 @@ section.timeline:before{
 	cursor:pointer;
 }
 
+.activity .detail .flow-text{
+	margin:2px;
+}
+
 .activity.received .detail{
 	border-left-color:#98E35A;
 	background-color:#EBFEF0;
+}
+
+.activity-action-btn{
+	position:absolute;
+	bottom:0;
+	padding-top:10px;
+	right:5px;
+	color:#6b6868;
+}
+
+.activity-action-btn.edit-btn{
+	right:30px;
+}
+
+.activity-action-btn .material-icons{
+	margin:0px;
+	font-size:1.2rem;
 }
 
 .activity.received .holder .detail:before {
@@ -140,4 +182,12 @@ section.timeline:before{
 	height: 8px;
   -webkit-transform: rotate(-45deg);
 	background:#FF6159;
+}
+
+.activity-summary-card span{
+	font-size:1.2rem;
+}
+
+.activity_summary .progress{
+	height:20px;
 }

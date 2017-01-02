@@ -2,31 +2,32 @@ angular.module('daybook',[])
 .controller('activityController',['$scope','$http','$filter',function($scope,$http,$filter){
     // console.log("controller loaded...");
 
-    $scope.getCurrentDate = function(){
-        return (new Date()).getTime();
-    }
-
+    $scope.currency = "$";
     $scope.init = function(){
         
         $scope.categories = [
             'Spent',
             'Received',
         ];
-        $scope.for_types = [
+        $scope.default_for_types = [
             'Food',
+            'Snacks',
+            'Fish',
+            'Chicken',
+            'Meat',
             'Groceries',
             'Vegetables',
             'Fruits',
-            'Fish',
-            'Snacks',
             'Transport',
-            'Utility',
             'Household',
+            'Utility',
+            'Electronics',
             'Lifestyle',
             'Medical',
+            'Loan',
+            'Profit',
             'Gift',
             'Advance',
-            'Rent',
             'Salary',
             'Misc',
             'Other'
@@ -35,32 +36,94 @@ angular.module('daybook',[])
             'Cash',
             'Card',
             'E-Cash',
-            'Other'
+            'Cheque'
         ];
 
+        $scope.getActivities(new Date());
+
+    };
+	
+    $scope.getActivityForTypes = function(){
+        var token = $scope.token || 'demo';
+        $http.get('/api/activity/fortypes?token='+token).then(function(response){
+            var for_types = {};
+            if(response.data){
+                angular.forEach(response.data.concat($scope.default_for_types), function(value, key) {
+                    this[value] = null;
+                }, for_types);
+            }
+            $('#activity_for').siblings().remove();
+            $('#activity_for').autocomplete({
+                data: for_types
+            });
+        }, function(err){});
+    };
+
+    $scope.getActivityInTypes = function(){
+        var token = $scope.token || 'demo';
+        $http.get('/api/activity/intypes?token='+token).then(function(response){
+            var in_types = {};
+            if(response.data){
+                angular.forEach(response.data, function(value, key) {
+                    this[value] = null;
+                }, in_types);
+            }
+            $('#activity_in').siblings().remove();
+            $('#activity_in').autocomplete({
+                data: in_types
+            });
+        }, function(err){});
+    };
+
+    $scope.resetActivityEntry = function(date){
         $scope.activity = {
-            "timestamp": new Date(),
+            "timestamp": date,
             "category": "Spent",
             "amount": undefined,
-            "for": "Food",
+            "for": "",
             "in": "",
             "by": "Cash",
             "at": "",
         };
         $scope.activitydate = $scope.activity.timestamp;
-
-        $scope.getActivities();
-
-    }
-	
-    $scope.getActivities = function(){
         $scope.activities = [];
+
+        $('#activity_items').material_chip({
+            data:[],
+            placeholder: '+Items [Enter]',
+            secondaryPlaceholder: '+Item [Enter]',
+        });
+    }
+
+    $scope.getActivities = function(date){
+        date = date || $scope.activitydate;
+        $scope.resetActivityEntry(date);
         var datevalue = $filter('date')($scope.activitydate,'ddMMyyyy');
         var token = $scope.token || 'demo';
         $http.get('/api/activity/'+ datevalue + "?token="+token).then(function(response){
-            $scope.activities = response.data;
+            if(response.data && response.data.payload){
+                $scope.activities = response.data.payload.activities;
+                $scope.activity_summary = response.data.payload.all_summary;
+                $scope.activity_spent_summary = response.data.payload.spent_summary;
+                $scope.activity_received_summary = response.data.payload.received_summary;
+            }
+            $scope.getActivityForTypes();
+            $scope.getActivityInTypes();
         }, function(err){});
-    }
+    };
+
+    $scope.getActivityLog = function(activity){
+        var activitystring = activity.category + " " +
+                $scope.currency + " " +
+                activity.amount + " by " +
+                activity.by + " " +
+                (activity.for ? (activity.category == 'Spent' ? 'for ' : 'from ' ) : '') +
+                activity.for + " " +
+(               activity.in ? (activity.category == 'Spent' ? 'in ' : 'as ') : '') + 
+                (activity.in ? activity.in +'. ' : '.' ) ;
+
+        return activitystring;
+    };
 
 	$scope.addActivity = function(){
         if($scope.activity && $scope.activity.amount){
@@ -69,49 +132,50 @@ angular.module('daybook',[])
             activity.timestamp = $scope.activity.timestamp.getTime();
             activity.date = $filter('date')($scope.activitydate,'ddMMyyyy') ;
 
-            $http.post('/api/activity/add',activity).then(function(response){        
-                $scope.activity = {
-                    "timestamp": new Date(),
-                    "category": "Spent",
-                    "amount": undefined,
-                    "for": "Food",
-                    "in": "",
-                    "by": "Cash",
-                    "at": "",
-                };
+            var items = $('#activity_items').material_chip('data');
+            activity.items = items.map(function(obj){
+                return obj.tag;
+            });
+
+            $http.post('/api/activity/add',activity).then(function(response){                
                 $scope.getActivities();
             }, function(err){});
-
-
         }
-    }
+    };
 
-	$scope.updateDate = function (newdate) {
+	$scope.updateActivityDate = function (newdate) {
 		$scope.activity.timestamp = newdate;
         $scope.setActivityDate();
 	};
 
-    $scope.setActivityDate = function(date){
+    $scope.setActivityDate = function(){
         if($filter('date')($scope.activitydate,'ddMMyyyy') != $filter('date')($scope.activity.timestamp,'ddMMyyyy')){
             $scope.activitydate = $scope.activity.timestamp;
-            $scope.getActivities();
+            $scope.getActivities($scope.activity.timestamp);
         }else{
             $scope.activitydate = $scope.activity.timestamp;
         }
-    }
+    };
+
+    $scope.editActivity = function(activity){
+        console.log(activity);
+        // $scope.activity.timestamp = new Date(activity.timestamp);
+        // console.log($scope.activity.timestamp);
+    };
 
     $scope.deleteActivity = function(activity){
         $http.post('/api/activity/delete',activity).then(function(response){        
             $scope.getActivities();
         }, function(err){});
-    }
-		
+    };
+
+
 }])
 
 
 
 // Date Picker
-.directive('datePicker', function ($timeout, $window) {
+.directive('datePicker', function ($timeout, $window, $filter) {
     return {
         restrict: 'AE',
         scope: {
@@ -342,12 +406,12 @@ angular.module('daybook',[])
                     return hours;
                 };
 
-                scope.time = "12:00";
+                scope.time = $filter('date')(new Date(),'hh:mm');
+                scope.timeframe = 'am';
+
                 scope.hour = 12;
                 scope.minutes = 0;
                 scope.currentoffset = 0;
-
-                scope.timeframe = 'am';
 
                 scope.changetime = function(time) {
                     scope.timeframe = time;

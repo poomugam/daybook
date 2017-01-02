@@ -22,14 +22,18 @@
 
 <body>
     <div id="container" ng-controller="activityController" ng-init="init()" ng-cloak>
-        <div class="card-panel z-depth-3">
-            <a class="btn-floating waves-effect waves-light green align-center" ng-click="getActivities()">
-                <i class="material-icons">refresh</i>
-            </a>
-            <input type="text" id="activity_token" class="validate" placeholder="token" ng-model="token">
+        <div class="row">
+            <div class="col s12 card-panel">
+                <div class="input-field inline">
+                    <input type="text" id="activity_token" class="validate" placeholder="token" ng-model="token">
+                </div>
+                <a class="btn-floating waves-effect waves-light" ng-class="token ? 'green':'grey'" ng-click="getActivities()">
+                    <i class="material-icons">restore</i>
+                </a>
+            </div>
         </div>
-        <div class="row date_selection datepicker-container">
-            <div class="col s12 blue-grey lighten-5">
+        <div class="row">
+            <div class="col s12 m4 date_selection datepicker-container">
                 <div date-picker
                     datepicker-title="Select Date"
                     picktime="true"
@@ -38,7 +42,7 @@
                     mondayfirst="false"
                     custom-message="You have selected"
                     selecteddate="activity.timestamp"
-                    updatefn="updateDate(newdate)">
+                    updatefn="updateActivityDate(newdate)">
                 
                     <div class="datepicker"
                         ng-class="{
@@ -117,92 +121,171 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row activity_entry">
-            <div class="col s12 z-depth-3">
-                <div class="activity-date-header valign-wrapper" >
-                    <h3 class="activity-date-stamp">{{ activitydate| date:'EEEE MMM d, y h:mm a' }}</h3>
+            <div class="col s12 m8">
+                <div class="row">
+                    <div class="col s12 activity_entry">
+                        <div class="col s12">
+                            <div class="activity-date-header valign-wrapper" ng-hide="true">
+                                <h3 class="activity-date-stamp">{{ activitydate| date:'EEEE MMM d, y h:mm a' }}</h3>
+                            </div>
+                            <div class="row">
+                                <div class="col s12">
+                                    <div class="input-field inline">
+                                        <ul id="activity_type" class="dropdown-content">
+                                            <li ng-repeat="c in categories"><a ng-click="activity.category = c">{{c}}</a></li>
+                                        </ul>
+                                        <a class="btn dropdown-button" ng-class="activity.category=='Spent'?'red':'green'" data-activates="activity_type">{{activity.category}}</a>
+                                    </div>
+                                    <div class="input-field inline">
+                                        <i class="material-icons prefix">$</i>
+                                        <input type="number" id="activity_amount" class="validate" placeholder="Amount" ng-model="activity.amount">
+                                    </div>
+                                    <span>using</span>
+                                    <div class="input-field inline">
+                                        <ul id="activity_by" class="dropdown-content">
+                                            <li ng-repeat="pt in payment_types"><a ng-click="activity.by = pt">{{pt}}</a></li>
+                                        </ul>
+                                        <a class="btn dropdown-button blue-grey" data-activates="activity_by">{{activity.by}}</a>
+                                    </div>  
+                                </div>
+
+                                <div class="col s12">
+                                    <span>{{activity.category=='Spent'?'for':'as'}}</span>
+                                    <div class="input-field inline">
+                                        <input type="text" id="activity_for" class="validate autocomplete" placeholder="" ng-model="activity.for">
+                                    </div>
+                                </div>
+
+                                <div class="col s12">
+                                    <span>{{activity.category=='Spent'?'in':'from'}}</span>
+                                    <div class="input-field inline">
+                                        <input type="text" id="activity_in" class="validate autocomplete" placeholder="" ng-model="activity.in">
+                                    </div>
+                                </div>
+
+                                <div class="col s10">
+                                    <div id="activity_items" class="chips chips-activity-items"></div>
+                                </div>
+
+                                <div class="col s2">                        
+                                    <a class="btn-floating btn-large waves-effect waves-light green center-align" ng-click="addActivity()">
+                                        <i class="large material-icons">done</i>
+                                    </a>
+                                </div>
+
+                            </div>
+            
+                        </div>
+                    </div>
                 </div>
-                <div class="input-field inline">
-                    <div class="input-field inline">
-                        <ul id="activity_type" class="dropdown-content">
-                            <li ng-repeat="c in categories"><a ng-click="activity.category = c">{{c}}</a></li>
-                        </ul>
-                        <a class="btn dropdown-button" ng-class="activity.category=='Spent'?'red':'green'" data-activates="activity_type">{{activity.category}}</a>
+                <div class="row">
+                    <div class="col s12 m8 card-panel blue-grey darken-3">
+                        <h5 class="grey-text text-lighten-2 right-align">
+                            {{ activity.timestamp| date:'EEEE MMM d, y' }}
+                        </h5>
+                        <div class="divider grey-text text-lighten-2"></div>
+                        <div class="grey-text text-lighten-2">
+                            <span>Opening Balance</span>
+                            <h5 class="right-align">
+                                <i class="material-icons tiny">$</i>
+                                {{activity_summary.opening_balance}}
+                            </h5>
+                        </div>
+                        <div class="grey-text text-lighten-2">
+                            <span>Closing Balance</span>
+                            <h5 class="right-align">
+                                <i class="material-icons tiny">$</i>
+                                {{activity_summary.closing_balance}}
+                            </h5>
+                        </div>
                     </div>
-                    <span>$</span>
-                    <div class="input-field inline">
-                        <input type="text" id="activity_amount" class="validate" placeholder="Amount" ng-model="activity.amount">
-                    </div>
-                    <span>{{activity.category=='Spent'?'for':'as'}}</span>
-                    <div class="input-field inline">
-                        <ul id="activity_for" class="dropdown-content">
-                            <li ng-repeat="f in for_types"><a ng-click="activity.for = f">{{f}}</a></li>
-                        </ul>
-                        <a class="btn dropdown-button amber" data-activates="activity_for">{{activity.for}}</a>
-                    </div>
-                    <span>{{activity.category=='Spent'?'in':'from'}}</span>
-                    <div class="input-field inline">
-                        <input type="text" id="activity_in" class="validate" placeholder="Location" ng-model="activity.in">
-                    </div>
-                    <span>by</span>
-                    <div class="input-field inline">
-                        <ul id="activity_by" class="dropdown-content">
-                            <li ng-repeat="pt in payment_types"><a ng-click="activity.by = pt">{{pt}}</a></li>
-                        </ul>
-                        <a class="btn dropdown-button blue-grey" data-activates="activity_by">{{activity.by}}</a>
-                    </div>
-                    <div class="input-field inline">
-                        <a class="btn-floating btn-large waves-effect waves-light green" ng-click="addActivity()">
-                            <i class="large material-icons">done</i>
-                        </a>
+                    <div class="col s12 m4">
+                        <div class="col s12 card-panel red darken-2 activity-summary-card">
+                            <span class="red-text text-lighten-3 left-align">
+                                SPENT
+                            </span>
+                            <h5 class="red-text text-lighten-3 right-align">
+                                <i class="material-icons small">$</i>
+                                {{activity_summary.spent}}
+                            </h5>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="col s12 card-panel green darken-2 activity-summary-card">
+                            <span class="green-text text-lighten-3 left-align">
+                                RECEIVED
+                            </span>
+                            <h5 class="green-text text-lighten-3 right-align">
+                                <i class="material-icons small">$</i>
+                                {{activity_summary.received}}
+                            </h5>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col s12 m8 timeline_container">
-                <section class="timeline" ng-if="activities.length > 0">
+
+        <div class="row">            
+            <div class="col s12 m4 activity_summary_container">
+                <div class="row">
+                    <div class="col s12" ng-show="activity_spent_summary.length > 0">
+                        <div class="card-panel amber lighten-5 activity_summary">
+                            <div class="card-content brown-text">
+                                <span class="card-title">Spent Summary</span>
+                            </div>
+                            <div class="divider brown"></div>
+                            <div ng-repeat="asps in activity_spent_summary">
+                                <div class="orange-text text-darken-3 right-align">{{asps.title}} [ {{ asps.amount | currency }} ]</div>
+                                <div class="progress orange lighten-4">
+                                    <div class="determinate orange lighten-1" ng-style="{ paddingLeft: '8px', width: asps.percent+'%'}">
+                                        <div class="left-align white-text">{{asps.percent + '%'}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col s12" ng-show="activity_received_summary.length > 0">
+                        <div class="card-panel indigo lighten-5 activity_summary">
+                            <div class="card-content teal-text">
+                                <span class="card-title">Received Summary</span>
+                            </div>
+                            <div class="divider teal"></div>
+                            <div ng-repeat="ars in activity_received_summary">
+                                <div class="teal-text text-darken-3 right-align">{{ ars.title}} [ {{ ars.amount | currency }} ]</div>
+                                <div class="progress teal lighten-4">
+                                    <div class="determinate teal lighten-1" ng-style="{ paddingLeft: '8px', width: ars.percent+'%'}">
+                                        <div class="left-align white-text">{{ars.percent + '%'}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col card-panel s12 m8 blue-grey lighten-5 timeline_container" ng-if="activities.length > 0">
+                <section class="timeline" >
                     <div class="activity" ng-class="act.category | lowercase" ng-repeat="act in activities">
                         <div class="holder">
                             <span class="timestamp">
                                 <span class="time">{{act.timestamp | date:'h:mm a'}}</span>
                             </span>
-                            <div class="detail" ng-init="act.showAction = false" ng-mouseover="act.showAction = true" ng-mouseleave="act.showAction = false">
-                                <p>
-                                    
-                                    {{act.category}} {{act.amount | currency }} {{act.for ? 'for '+act.for : ''}} {{act.in ? 'in '+act.in : ''}}  by {{act.by}}. 
-
-                                    <a class="btn-floating btn-small waves-effect waves-light red" ng-if="act.showAction" ng-click="deleteActivity(act)">
-                                        <i class="medium material-icons">delete</i>
-                                    </a>
+                            <div class="detail" ng-init="act.showAction = true" ng-mouseover="act.showAction = true" ng-mouseleave="act.showAction = true">
+                                <p class="flow-text">
+                                    {{ getActivityLog(act)}}  
                                 </p>
-
+                                <span class="chip z-depth-2 lighten-2" ng-class="act.category == 'Spent' ? 'red':'green'" ng-repeat="item in act.items"> {{ item }}</span>
+                                <div class="row"></div>
+                                    <a class="activity-action-btn edit-btn" ng-if="act.showAction" ng-click="editActivity(act)" ng-hide="true">
+                                        <i class="material-icons">edit</i>
+                                    </a>
+                                    <a class="activity-action-btn delete-btn" ng-if="act.showAction" ng-click="deleteActivity(act)">
+                                        <i class="material-icons">delete</i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
             </div>
-            
-            <div class="col s12 m4 activity_summary_container" ng-hide="true">
-                <div class="row">
-                    <div class="col s12 m6">
-                        <div class="card grey darken-1">
-                            <div class="card-content white-text">
-                                <span class="card-title">Activity Summary</span>
-                            </div>
-                            <div class="card-action inline">
-                                <a class="btn-large red">$ 0</a>
-
-                                <a class="btn-large green">$ 0</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row"><svg version="1.1" class="highcharts-root" style="font-family:'Unica One', sans-serif;font-size:12px;" xmlns="http://www.w3.org/2000/svg" width="600" height="400"><desc>Summary</desc><defs><linearGradient x1="0" y1="0" x2="1" y2="1" id="highcharts-y5clw4k-1"><stop offset="0" stop-color="#2a2a2b" stop-opacity="1"></stop><stop offset="1" stop-color="#3e3e40" stop-opacity="1"></stop></linearGradient><clipPath id="highcharts-y5clw4k-2"><rect x="0" y="0" width="580" height="286" fill="none"></rect></clipPath></defs><rect fill="" class="highcharts-background" x="0" y="0" width="600" height="400" rx="0" ry="0"></rect><rect fill="grey" class="highcharts-plot-background" x="10" y="48" width="580" height="286"></rect><rect fill="none" class="highcharts-plot-border" x="10" y="48" width="580" height="286"></rect><g class="highcharts-series-group "><g class="highcharts-series highcharts-series-0 highcharts-pie-series highcharts-color-undefined highcharts-tracker highcharts-series-hover" transform="translate(10,48) scale(1 1)" style="cursor:pointer;"><path fill="#2b908f" d="M 289.9708747318716 0.0000029660183713531296 A 143 143 0 1 1 218.92086629580615 267.0836683526939 L 223.89143508630923 258.4064887476104 A 133 133 0 1 0 289.97291146390853 10.000002758604495 Z" class="highcharts-halo highcharts-color-0" fill-opacity="0.25"></path><path fill="rgb(68,169,168)" d="M 289.97291146390853 10.000002758604495 A 133 133 0 1 1 223.89143508630923 258.4064887476104 L 290 143 A 0 0 0 1 0 290 143 Z" class="highcharts-point highcharts-color-0 highcharts-point-hover" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#90ee7e" d="M 223.77606167107575 258.3403224904753 A 133 133 0 0 1 174.08161983952954 77.7931817907617 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-point-select highcharts-color-1" transform="translate(-10,3)" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#f45b5b" d="M 174.14688460605623 77.67729603332735 A 133 133 0 0 1 240.24928057601113 19.655499041118432 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-color-2" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#7798BF" d="M 240.37264993177027 19.605810002231564 A 133 133 0 0 1 280.2480250418835 10.358004446494135 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-color-3 " stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#aaeeee" d="M 280.38067189131715 10.348318794153585 A 133 133 0 0 1 288.0863316456265 10.01376810575664 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-color-4 " stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path><path fill="#ff0066" d="M 288.2193188121905 10.011920930831621 A 133 133 0 0 1 289.81526566823646 10.000128296202206 L 290 143 A 0 0 0 0 0 290 143 Z" class="highcharts-point highcharts-color-5 " stroke="#ffffff" stroke-width="1" stroke-linejoin="round"></path></g><g class="highcharts-markers highcharts-series-0 highcharts-pie-series highcharts-color-undefined highcharts-series-hover" transform="translate(10,48) scale(1 1)"></g></g><g class="highcharts-button highcharts-contextbutton" style="cursor:pointer;" stroke-linecap="round" transform="translate(566,10)"><title></title><rect fill="#505053" class=" highcharts-button-box" x="0.5" y="0.5" width="24" height="22" rx="2" ry="2" stroke="none" stroke-width="1"></rect><path fill="#666666" d="M 6 6.5 L 20 6.5 M 6 11.5 L 20 11.5 M 6 16.5 L 20 16.5" class="highcharts-button-symbol" stroke="#DDDDDD" stroke-width="3"></path><text x="0" style="font-weight:normal;color:#333333;fill:#333333;" y="12"></text></g><text x="300" text-anchor="middle" class="highcharts-title" style="color:#E0E0E3;font-size:20px;text-transform:uppercase;fill:#E0E0E3;width:536px;" y="25"><tspan></tspan></text><g class="highcharts-legend" transform="translate(63,346)"><rect fill="none" class="highcharts-legend-box" rx="0" ry="0" x="0" y="0" width="473" height="39" visibility="visible"></rect><g><g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-0" transform="translate(8,3)"><text x="21" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start" y="15"><tspan></tspan></text><rect x="2" y="4" width="12" height="12" fill="#2b908f" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-1" transform="translate(188.390625,3)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start"></text><rect x="2" y="4" width="12" height="12" fill="#90ee7e" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-2" transform="translate(267.859375,3)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start"></text><rect x="2" y="4" width="12" height="12" fill="#f45b5b" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-3" transform="translate(344.390625,3)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start">Safari</text><rect x="2" y="4" width="12" height="12" fill="#7798BF" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-4" transform="translate(416.375,3)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start"></text><rect x="2" y="4" width="12" height="12" fill="#aaeeee" rx="6" ry="6" class="highcharts-point"></rect></g><g class="highcharts-legend-item highcharts-pie-series highcharts-color-5" transform="translate(8,17)"><text x="21" y="15" style="color:#E0E0E3;font-size:12px;font-weight:bold;cursor:pointer;fill:#E0E0E3;" text-anchor="start"><tspan></tspan></text><rect x="2" y="4" width="12" height="12" fill="#ff0066" rx="6" ry="6" class="highcharts-point"></rect></g></g></g></g><text x="590" class="highcharts-credits" text-anchor="end" style="cursor:pointer;color:#666;font-size:9px;fill:#666;" y="395">H/text><g class="highcharts-label highcharts-tooltip highcharts-color-0" style="cursor:default;pointer-events:none;white-space:nowrap;" transform="translate(337,255)" opacity="1" visibility="visible"><path fill="none" class="highcharts-label-box highcharts-tooltip-box" d="M 3.5 0.5 L 129.5 0.5 C 132.5 0.5 132.5 0.5 132.5 3.5 L 132.5 40.5 C 132.5 43.5 132.5 43.5 129.5 43.5 L 3.5 43.5 C 0.5 43.5 0.5 43.5 0.5 40.5 L 0.5 3.5 C 0.5 0.5 0.5 0.5 3.5 0.5" isShadow="true" stroke="#000000" stroke-opacity="0.049999999999999996" stroke-width="5" transform="translate(1, 1)"></path><path fill="none" class="highcharts-label-box highcharts-tooltip-box" d="M 3.5 0.5 L 129.5 0.5 C 132.5 0.5 132.5 0.5 132.5 3.5 L 132.5 40.5 C 132.5 43.5 132.5 43.5 129.5 43.5 L 3.5 43.5 C 0.5 43.5 0.5 43.5 0.5 40.5 L 0.5 3.5 C 0.5 0.5 0.5 0.5 3.5 0.5" isShadow="true" stroke="#000000" stroke-opacity="0.09999999999999999" stroke-width="3" transform="translate(1, 1)"></path><path fill="none" class="highcharts-label-box highcharts-tooltip-box" d="M 3.5 0.5 L 129.5 0.5 C 132.5 0.5 132.5 0.5 132.5 3.5 L 132.5 40.5 C 132.5 43.5 132.5 43.5 129.5 43.5 L 3.5 43.5 C 0.5 43.5 0.5 43.5 0.5 40.5 L 0.5 3.5 C 0.5 0.5 0.5 0.5 3.5 0.5" isShadow="true" stroke="#000000" stroke-opacity="0.15" stroke-width="1" transform="translate(1, 1)"></path><path fill="rgba(0, 0, 0, 0.85)" class="highcharts-label-box highcharts-tooltip-box" d="M 3.5 0.5 L 129.5 0.5 C 132.5 0.5 132.5 0.5 132.5 3.5 L 132.5 40.5 C 132.5 43.5 132.5 43.5 129.5 43.5 L 3.5 43.5 C 0.5 43.5 0.5 43.5 0.5 40.5 L 0.5 3.5 C 0.5 0.5 0.5 0.5 3.5 0.5" stroke="#2b908f" stroke-width="1"></path><text x="8" style="font-size:12px;color:#F0F0F0;fill:#F0F0F0;" y="20"><tspan style="font-size: 10px"> </tspan><tspan x="8" dy="15"></tspan><tspan style="font-weight:bold" dx="0">58.3%</tspan></text></g></svg>
-                </div>
-            </div>
-
 
         </div>
 

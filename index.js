@@ -4,6 +4,7 @@ var app         = express();
 var bodyParser  = require('body-parser');
 var fs          = require('fs');
 var db          = require('diskdb');
+var _           = require('lodash');
 
 app.set('port', (process.env.PORT || 9000));
 
@@ -16,10 +17,12 @@ var Schema = mongoose.Schema;
 
 var ActivitySchema = new Schema({
     "token":String,
+    "type":String,
     "date":String,
 	"timestamp":Number,
 	"category":String,
 	"amount":Number,
+    "items":[String],
 	"for":String,
 	"in":String,
 	"by":String,
@@ -58,11 +61,97 @@ function bootstrapApp(){
 
     var router = express.Router();              // get an instance of the express Router
 
-    router.get('/activity/:date', function(req, res) {
-        Activity.find({token:req.query.token,date:req.params.date}).sort('-timestamp').exec((err, activities) => {
+    router.get('/activity/fortypes',function(req, res){
+        Activity.find({token:req.query.token}).select('for').exec((err, fortypes) => {
             if (err) return console.error(err);
-            console.log(activities);
-            res.json(activities || []);
+            var for_types = _.chain(fortypes).map('for').uniq().sort().value();
+            res.json(for_types || []);
+        })
+    });
+
+    router.get('/activity/intypes',function(req, res){
+        Activity.find({token:req.query.token}).select('in').exec((err, intypes) => {
+            if (err) return console.error(err);
+            var in_types = _.chain(intypes).map('in').uniq().sort().value();
+            res.json(in_types || []);
+        })
+    });
+
+    router.get('/activity/:date', function(req, res) {
+        Activity.find({token:req.query.token}).sort('-timestamp').exec((err, activities) => {
+            if (err || !req.params.date) return console.error(err);
+            var activities_by_date = _.filter(activities,_.matchesProperty('date',req.params.date));
+            var activities_on_spent = _.filter(activities_by_date,_.matchesProperty('category','Spent'));
+            var activities_on_received = _.filter(activities_by_date,_.matchesProperty('category','Received'));
+
+
+            var fdate = req.params.date;
+            var dt = new Date();
+            dt.setHours(0,0,0,0);
+            dt.setDate(parseInt(fdate.slice(0,2)));
+            dt.setMonth(parseInt(fdate.slice(2,4))-1);
+            dt.setYear(parseInt(fdate.slice(4)));
+            
+            var ltCurrentDate = function(obj){
+                return obj.timestamp < dt.valueOf();
+            };
+            
+            var all_summary = {};
+            all_summary.opening_balance = _.filter(activities, ltCurrentDate)
+                                            .reduce(function(sum,obj){
+                                                return sum + (obj.category == 'Received' ? obj.amount : (0-obj.amount));
+                                            },0);
+                                            
+            all_summary.spent = _.reduce(activities_on_spent,function(sum,obj){
+                                    return sum + obj.amount;
+                                },0);
+            all_summary.received = _.reduce(activities_on_received,function(sum,obj){
+                                        return sum + obj.amount;
+                                    },0);
+            all_summary.closing_balance = all_summary.opening_balance + all_summary.received - all_summary.spent;
+
+
+            var spent_summary = _.chain(activities_on_spent)
+                                .groupBy(function(obj){
+                                    return obj.for;
+                                }).reduce(function(result,arr,key){
+                                    var sObj = {};
+                                    sObj.title = key;
+                                    sObj.amount = _.reduce(arr,function(sum,obj){
+                                        return sum + obj.amount;
+                                    },0)
+                                    sObj.percent = _.ceil(_.multiply(_.divide(sObj.amount,all_summary.spent),100),1);
+                                    result.push(sObj);
+                                    return result;
+                                },[]).sortBy('amount').reverse().value();
+
+            var received_summary = _.chain(activities_on_received)
+                                .groupBy(function(obj){
+                                    return obj.for;
+                                }).reduce(function(result,arr,key){
+                                    var sObj = {};
+                                    sObj.title = key;
+                                    sObj.amount = _.reduce(arr,function(sum,obj){
+                                        return sum + obj.amount;
+                                    },0)
+                                    sObj.percent = _.ceil(_.multiply(_.divide(sObj.amount,all_summary.received),100),1);
+                                    result.push(sObj);
+                                    return result;
+                                },[]).sortBy('amount').reverse().value();
+
+            var responseData = {
+                status:'success',
+                payload:{
+                    activities:activities_by_date,
+                    all_summary:all_summary,
+                    spent_summary:spent_summary,
+                    received_summary:received_summary
+
+                }
+            };
+
+
+            res.json(responseData || []);
         })
     });
 
@@ -76,11 +165,10 @@ function bootstrapApp(){
         var activity = new Activity(req.body);
         activity.save(function (err) {
             if (err) {
-                console.log("error");
+                // console.log("error");
                 return console.error(err);
             }
-            console.log("activity saved!");
-
+            // console.log("activity saved!");
             // var result  = db.activity.save(req.body);
             res.json({"status":"success"});  
         });
@@ -112,7 +200,6 @@ function bootstrapApp(){
 
     router.post('/activity/delete/:id',function(req, res){
         var data = req.body;
-
         Activity.findByIdAndRemove(req.params.id || data._id, function (err, activity) {  
             var response = {
                 message: "success",
