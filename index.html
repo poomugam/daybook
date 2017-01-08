@@ -140,7 +140,7 @@
                                         <i class="material-icons prefix">$</i>
                                         <input type="number" id="activity_amount" class="validate" placeholder="Amount" ng-model="activity.amount">
                                     </div>
-                                    <span>using</span>
+                                    <span>{{activity.category=='Spent'?'using':'by'}}</span>
                                     <div class="input-field inline">
                                         <ul id="activity_by" class="dropdown-content">
                                             <li ng-repeat="pt in payment_types"><a ng-click="activity.by = pt">{{pt}}</a></li>
@@ -274,7 +274,7 @@
                                 </p>
                                 <span class="chip z-depth-2 lighten-2" ng-class="act.category == 'Spent' ? 'red':'green'" ng-repeat="item in act.items"> {{ item }}</span>
                                 <div class="row"></div>
-                                    <a class="activity-action-btn edit-btn" ng-if="act.showAction" ng-click="editActivity(act)" ng-hide="true">
+                                    <a class="activity-action-btn edit-btn" ng-if="act.showAction" ng-click="editActivity(act)"></a>
                                         <i class="material-icons">edit</i>
                                     </a>
                                     <a class="activity-action-btn delete-btn" ng-if="act.showAction" ng-click="deleteActivity(act)">

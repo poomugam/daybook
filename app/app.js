@@ -117,9 +117,9 @@ angular.module('daybook',[])
                 $scope.currency + " " +
                 activity.amount + " by " +
                 activity.by + " " +
-                (activity.for ? (activity.category == 'Spent' ? 'for ' : 'from ' ) : '') +
+                (activity.for ? (activity.category == 'Spent' ? 'for ' : 'as ' ) : '') +
                 activity.for + " " +
-(               activity.in ? (activity.category == 'Spent' ? 'in ' : 'as ') : '') + 
+(               activity.in ? (activity.category == 'Spent' ? 'in ' : 'from ') : '') + 
                 (activity.in ? activity.in +'. ' : '.' ) ;
 
         return activitystring;
@@ -158,9 +158,27 @@ angular.module('daybook',[])
     };
 
     $scope.editActivity = function(activity){
-        console.log(activity);
-        // $scope.activity.timestamp = new Date(activity.timestamp);
-        // console.log($scope.activity.timestamp);
+        // console.log(activity);
+        $scope.activity = angular.copy(activity);
+        $scope.activity.timestamp = new Date(activity.timestamp);
+        $scope.updateActivityDate($scope.activity.timestamp);
+
+        var tags = [];
+        if(activity.items){
+            activity.items.forEach(function(value,index){
+                tags.push({
+                    tag:value
+                });
+            });
+        }
+        $('#activity_items').material_chip({
+            data:tags,
+            placeholder: '+Items [Enter]',
+            secondaryPlaceholder: '+Item [Enter]',
+        });
+
+        $('#activity_amount').focus();
+
     };
 
     $scope.deleteActivity = function(activity){
