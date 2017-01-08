@@ -225,6 +225,16 @@
         </div>
 
         <div class="row">            
+            <div class="col s12 card-panel">
+                <div class="btn-group center-align">
+                    <a class="btn" ng-class="history_period=='day'?'green':'grey'" ng-click="getActivities('','day')">DAY</a>
+                    <a class="btn" ng-class="history_period=='week'?'green':'grey'" ng-click="getActivities('','week')">WEEK</a>
+                    <a class="btn" ng-class="history_period=='month'?'green':'grey'" ng-click="getActivities('','month')">MONTH</a>
+                    <a class="btn" ng-class="history_period=='year'?'green':'grey'" ng-click="getActivities('','year')">YEAR</a>
+                </div>
+            </div>
+        </div>
+        <div class="row">            
             <div class="col s12 m4 activity_summary_container">
                 <div class="row">
                     <div class="col s12" ng-show="activity_spent_summary.length > 0">

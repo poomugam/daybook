@@ -2,6 +2,7 @@ angular.module('daybook',[])
 .controller('activityController',['$scope','$http','$filter',function($scope,$http,$filter){
     // console.log("controller loaded...");
 
+    $scope.history_period = 'day';
     $scope.currency = "$";
     $scope.init = function(){
         
@@ -95,12 +96,13 @@ angular.module('daybook',[])
         });
     }
 
-    $scope.getActivities = function(date){
-        date = date || $scope.activitydate;
+    $scope.getActivities = function(date,period){
+        date = date || $scope.activitydate || new Date();
+        $scope.history_period = period || 'day'
         $scope.resetActivityEntry(date);
-        var datevalue = $filter('date')($scope.activitydate,'ddMMyyyy');
+        // var datevalue = $filter('date')($scope.activitydate,'ddMMyyyy');
         var token = $scope.token || 'demo';
-        $http.get('/api/activity/'+ datevalue + "?token="+token).then(function(response){
+        $http.get('/api/activity/summary/'+ token + "?period="+$scope.history_period +"&timestamp="+date.getTime()).then(function(response){
             if(response.data && response.data.payload){
                 $scope.activities = response.data.payload.activities;
                 $scope.activity_summary = response.data.payload.all_summary;

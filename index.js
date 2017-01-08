@@ -34,7 +34,7 @@ let Activity = mongoose.model('Activity',ActivitySchema);
 // mongo db connection
 let options = { server: { socketOptions: { keepAlive: 300000, connectTimeoutMS: 30000 } }, 
                 replset: { socketOptions: { keepAlive: 300000, connectTimeoutMS : 30000 } } };       
-let mongodbUri = 'mongodb://localhost:27017/daybook';
+let mongodbUri = 'mongodb://localhost:27017/NSAMPLE';
 
 mongoose.connect(mongodbUri, options);
 let conn = mongoose.connection;             
@@ -80,16 +80,13 @@ function bootstrapApp(){
     });
 
 
-    router.get('/activity/summary/:date', (req, res) => {
-        let token = req.query.token;
-        let fdate = req.params.date;
+    router.get('/activity/summary/:token', (req, res) => {
+        let token = req.params.token;
+        let fdate = req.query.timestamp;
         let period = req.query.period;
 
-        let dt = new Date();
+        let dt = new Date(parseInt(fdate));
         dt.setHours(0,0,0,0);
-        dt.setDate(parseInt(fdate.slice(0,2)));
-        dt.setMonth(parseInt(fdate.slice(2,4))-1);
-        dt.setYear(parseInt(fdate.slice(4)));
         let dtvalue = dt.getTime() - dt.getTimezoneOffset();
         
         let dayStart = new Date(dtvalue);
@@ -145,7 +142,6 @@ function bootstrapApp(){
         agg_match['$match']['timestamp'] = {};
         agg_match['$match']['timestamp']['$lt'] = endDate;
         agg_match['$match']['timestamp']['$gt'] = startDate;
-        // agg_match['$match']['category']= 'Received';
         aggs.push(agg_match);
 
         agg_group = {};
@@ -160,6 +156,13 @@ function bootstrapApp(){
         agg_group['$group']['count']['$sum'] = 1;
 
         aggs.push(agg_group);
+
+        agg_sort = {
+            $sort:{
+                total:-1
+            }
+        };
+        aggs.push(agg_sort);
 
         agg_group_1 = {
             $group:{
@@ -178,7 +181,7 @@ function bootstrapApp(){
 
         aggs.push(agg_group_1);
 
-        Activity.aggregate(aggs, function (err, result) {
+        Activity.aggregate(aggs, (err, result) => {
             if (err) {
                 console.log(err);
                 return;
@@ -190,14 +193,50 @@ function bootstrapApp(){
             all_summary.spent = 0;
             all_summary.received = 0;
 
-            let spent_summary = {};
+            let spent_summary = [];
+            let received_summary = [];
+            let activities = [];
 
-            let received_summary = {};
+            _.each(result,(category) => {
+
+                if(category._id.category == 'Spent'){
+                    all_summary.spent = category.total;
+
+                    _.each(category.for_summary,(forObj) => {
+                        let sObj = {};
+                        sObj.title = forObj._id.for;
+                        sObj.amount = forObj.total;
+                        sObj.no_of_activities = forObj.count;
+                        sObj.percent = _.ceil(_.multiply(_.divide(sObj.amount,all_summary.spent),100),1);
+                        spent_summary.push(sObj);
+
+                    });
+
+                }else if(category._id.category == 'Received'){
+                    
+                    all_summary.received = category.total;
+
+                    _.each(category.for_summary,(forObj) => {
+                        let sObj = {};
+                        sObj.title = forObj._id.for;
+                        sObj.amount = forObj.total;
+                        sObj.percent = _.ceil(_.multiply(_.divide(sObj.amount,all_summary.received),100),1);
+                        received_summary.push(sObj);
+
+                    });
+
+                }
+
+                if(period == 'day')
+                    activities = _.concat(activities,_.flatten(category.items))
+
+            });
+
 
             let responseData = {
                 status:'success',
                 payload:{
-                    activities:result,
+                    activities:activities,
                     all_summary:all_summary,
                     spent_summary:spent_summary,
                     received_summary:received_summary
@@ -209,12 +248,12 @@ function bootstrapApp(){
 
     });
 
-    router.get('/activity/:token', function(req, res) {
-        Activity.find({token:req.params.token}).sort('timestamp').exec((err, activities) => {
-            if (err) return console.error(err);
-            res.json(activities || []);
-        });
-    });
+    // router.get('/activity/:token', function(req, res) {
+    //     Activity.find({token:req.params.token}).sort('timestamp').exec((err, activities) => {
+    //         if (err) return console.error(err);
+    //         res.json(activities || []);
+    //     });
+    // });
 
     router.get('/activity/:date', function(req, res) {
         Activity.find({token:req.query.token}).sort('-timestamp').exec((err, activities) => {
