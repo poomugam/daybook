@@ -5,15 +5,24 @@ let bodyParser  = require('body-parser');
 let fs          = require('fs');
 let db          = require('diskdb');
 let _           = require('lodash');
+let async       = require('async');
 
 app.set('port', (process.env.PORT || 9000));
 
 
-db.connect('data/', ['activity']); // connect db and load collection
+db.connect('data/', ['activity','users']); // connect db and load collection
 
 // mongoose 4.3.x
 let mongoose = require('mongoose');
 let Schema = mongoose.Schema;
+
+let UserSchema = new Schema({
+    "name":String,
+    "username":String,
+    "password":String,
+    "token":String,
+    "active":Boolean
+});
 
 let ActivitySchema = new Schema({
     "token":String,
@@ -30,11 +39,13 @@ let ActivitySchema = new Schema({
 });
 
 let Activity = mongoose.model('Activity',ActivitySchema);
+let User = mongoose.model('User',UserSchema);
 
 // mongo db connection
 let options = { server: { socketOptions: { keepAlive: 300000, connectTimeoutMS: 30000 } }, 
                 replset: { socketOptions: { keepAlive: 300000, connectTimeoutMS : 30000 } } };       
-let mongodbUri = 'mongodb://localhost:27017/NSAMPLE';
+// let mongodbUri = 'mongodb://localhost:27017/NSAMPLE';
+let mongodbUri = 'mongodb://heroku_zjzb59nk:llsgih1ktiqta1h77n5dg11vkr@ds145138.mlab.com:45138/heroku_zjzb59nk';
 
 mongoose.connect(mongodbUri, options);
 let conn = mongoose.connection;             
@@ -135,116 +146,191 @@ function bootstrapApp(){
                 break;
         }
 
-        let aggs = [];
-        agg_match = {};
-        agg_match['$match'] =  {};
-        agg_match['$match']['token'] = token;
-        agg_match['$match']['timestamp'] = {};
-        agg_match['$match']['timestamp']['$lt'] = endDate;
-        agg_match['$match']['timestamp']['$gt'] = startDate;
-        aggs.push(agg_match);
+        
 
-        agg_group = {};
-        agg_group['$group'] = {};
-        agg_group['$group']["docs"] = {"$push": "$$ROOT"}
-        agg_group['$group']['_id'] = {};
-        agg_group['$group']['_id']['category'] = "$category";
-        agg_group['$group']['_id']['for'] = "$for";
-        agg_group['$group']['total'] = {};
-        agg_group['$group']['total']['$sum'] = "$amount";
-        agg_group['$group']['count'] = {};
-        agg_group['$group']['count']['$sum'] = 1;
+        var getSummaryDetails = function(callback){
 
-        aggs.push(agg_group);
+            let aggs = [];
+            agg_match = {};
+            agg_match['$match'] =  {};
+            agg_match['$match']['token'] = token;
+            agg_match['$match']['timestamp'] = {};
+            agg_match['$match']['timestamp']['$lt'] = endDate;
+            agg_match['$match']['timestamp']['$gt'] = startDate;
+            aggs.push(agg_match);
 
-        agg_sort = {
-            $sort:{
-                total:-1
-            }
-        };
-        aggs.push(agg_sort);
-
-        agg_group_1 = {
-            $group:{
-                _id:{
-                    category:"$_id.category"
-                },
-                total:{$sum:"$total"},
-                for_summary:{
-                    $push:'$$ROOT'
-                },
-                items:{
-                    $push:"$docs"
-                }
-            }
-        };
-
-        aggs.push(agg_group_1);
-
-        Activity.aggregate(aggs, (err, result) => {
-            if (err) {
-                console.log(err);
-                return;
-            }
-
-            let all_summary = {};
-            all_summary.opening_balance = 0;
-            all_summary.closing_balance = 0;
-            all_summary.spent = 0;
-            all_summary.received = 0;
-
-            let spent_summary = [];
-            let received_summary = [];
-            let activities = [];
-
-            _.each(result,(category) => {
-
-                if(category._id.category == 'Spent'){
-                    all_summary.spent = category.total;
-
-                    _.each(category.for_summary,(forObj) => {
-                        let sObj = {};
-                        sObj.title = forObj._id.for;
-                        sObj.amount = forObj.total;
-                        sObj.no_of_activities = forObj.count;
-                        sObj.percent = _.ceil(_.multiply(_.divide(sObj.amount,all_summary.spent),100),1);
-                        spent_summary.push(sObj);
-
-                    });
-
-                }else if(category._id.category == 'Received'){
-                    
-                    all_summary.received = category.total;
-
-                    _.each(category.for_summary,(forObj) => {
-                        let sObj = {};
-                        sObj.title = forObj._id.for;
-                        sObj.amount = forObj.total;
-                        sObj.percent = _.ceil(_.multiply(_.divide(sObj.amount,all_summary.received),100),1);
-                        received_summary.push(sObj);
-
-                    });
-
-                }
-
-                if(period == 'day')
-                    activities = _.concat(activities,_.flatten(category.items))
-
-            });
-
-
-            let responseData = {
-                status:'success',
-                payload:{
-                    activities:activities,
-                    all_summary:all_summary,
-                    spent_summary:spent_summary,
-                    received_summary:received_summary
-
+            agg_sort_date = {
+                $sort:{
+                    timestamp:-1
                 }
             };
-            res.json(responseData || []);
+            aggs.push(agg_sort_date);
+
+            agg_group = {};
+            agg_group['$group'] = {};
+            agg_group['$group']["docs"] = {"$push": "$$ROOT"}
+            agg_group['$group']['_id'] = {};
+            agg_group['$group']['_id']['category'] = "$category";
+            agg_group['$group']['_id']['for'] = "$for";
+            agg_group['$group']['total'] = {};
+            agg_group['$group']['total']['$sum'] = "$amount";
+            agg_group['$group']['count'] = {};
+            agg_group['$group']['count']['$sum'] = 1;
+
+            aggs.push(agg_group);
+
+            agg_sort = {
+                $sort:{
+                    total:-1
+                }
+            };
+            aggs.push(agg_sort);
+
+            agg_group_1 = {
+                $group:{
+                    _id:{
+                        category:"$_id.category"
+                    },
+                    total:{$sum:"$total"},
+                    for_summary:{
+                        $push:'$$ROOT'
+                    },
+                    items:{
+                        $push:"$docs"
+                    }
+                }
+            };
+
+            aggs.push(agg_group_1);
+
+            Activity.aggregate(aggs, (err, result) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+
+                let all_summary = {};
+                all_summary.opening_balance = 0;
+                all_summary.closing_balance = 0;
+                all_summary.spent = 0;
+                all_summary.received = 0;
+
+                let spent_summary = [];
+                let received_summary = [];
+                let activities = [];
+
+                _.each(result,(category) => {
+                    if(category._id.category == 'Spent'){
+                        all_summary.spent = _.ceil(category.total,2);
+
+                        _.each(category.for_summary,(forObj) => {
+                            let sObj = {};
+                            sObj.title = forObj._id.for;
+                            sObj.amount = forObj.total;
+                            sObj.no_of_activities = forObj.count;
+                            sObj.percent = _.ceil(_.multiply(_.divide(sObj.amount,all_summary.spent),100),1);
+                            sObj.items = _.flatten(forObj.docs);
+                            spent_summary.push(sObj);
+
+                        });
+
+                    }else if(category._id.category == 'Received'){
+                        
+                        all_summary.received = _.ceil(category.total,2);
+
+                        _.each(category.for_summary,(forObj) => {
+                            let sObj = {};
+                            sObj.title = forObj._id.for;
+                            sObj.amount = forObj.total;
+                            sObj.percent = _.ceil(_.multiply(_.divide(sObj.amount,all_summary.received),100),1);
+                            sObj.items = _.flatten(forObj.docs);
+                            received_summary.push(sObj);
+
+                        });
+
+                    }
+
+                    if(period == 'day')
+                        activities = _.concat(activities,_.flatten(category.items))
+
+                });
+
+
+                let responseData = {
+                    status:'success',
+                    payload:{
+                        activities:activities,
+                        all_summary:all_summary,
+                        spent_summary:spent_summary,
+                        received_summary:received_summary
+
+                    }
+                };
+
+                callback(null,responseData);
+                
+            });
+
+        };
+        
+
+
+        var getOverallSummary = function(resultData,callback){
+
+            let aggs = [];
+            agg_match = {};
+            agg_match['$match'] =  {};
+            agg_match['$match']['token'] = token;
+            agg_match['$match']['timestamp'] = {};
+            agg_match['$match']['timestamp']['$lt'] = startDate;
+            aggs.push(agg_match);
+
+            agg_group = {};
+            agg_group['$group'] = {};
+            agg_group['$group']['_id'] = {};
+            agg_group['$group']['_id']['category'] = "$category";
+            agg_group['$group']['total'] = {};
+            agg_group['$group']['total']['$sum'] = "$amount";
+            agg_group['$group']['count'] = {};
+            agg_group['$group']['count']['$sum'] = 1;
+
+            aggs.push(agg_group);
+
+            var all_summary = resultData.payload.all_summary;
+
+            Activity.aggregate(aggs, (err, result) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                _.each(result,(category) => {
+                    if(category._id.category == 'Spent')
+                        all_summary.opening_balance = _.ceil(all_summary.opening_balance - category.total,2);
+                    else    
+                        all_summary.opening_balance = _.ceil(all_summary.opening_balance + category.total,2);
+                });
+                
+                all_summary.closing_balance = _.ceil((all_summary.opening_balance - all_summary.spent + all_summary.received),2);
+                callback(null,resultData);
+                
+            });
+
+        }
+
+
+
+
+        async.waterfall([
+            getSummaryDetails,
+            getOverallSummary
+
+        ],(err,results) => {
+            if(err) return console.error(err);
+
+            res.json(results || []);
         });
+
+        
 
     });
 
@@ -526,7 +612,22 @@ function initDummyData(){
 
 }
 
+function restoreDaybook_(){
 
+    _.each(backup,(val)=>{
+        let activity = new Activity(_.omit(val,['_id','__v']));
+        activity.save( (err) => {
+            if (err) {
+                // console.log("error");
+                return console.error(err);
+            }
+            console.log("document saved...");
+        });
+
+    });
+
+
+}
 
 
 

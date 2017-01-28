@@ -1,0 +1,301 @@
+<div ng-controller="activityController" ng-init="init()" ng-cloak>
+    <!--<div class="row">
+        <div class="col s12 card-panel">
+            <div class="input-field inline">
+                <input type="text" id="activity_token" class="validate" placeholder="token" ng-model="token">
+            </div>
+            <a class="btn-floating waves-effect waves-light" ng-class="token ? 'green':'grey'" ng-click="getActivities()">
+                <i class="material-icons">restore</i>
+            </a>
+        </div>
+    </div>-->
+    <div class="row">
+        <div class="col s12 m4 date_selection datepicker-container">
+            <div date-picker
+                datepicker-title="Select Date"
+                picktime="true"
+                pickdate="true"
+                pickpast="true"
+                mondayfirst="false"
+                custom-message="You have selected"
+                selecteddate="activity.timestamp"
+                updatefn="updateActivityDate(newdate)">
+            
+                <div class="datepicker"
+                    ng-class="{
+                        'am': timeframe == 'am',
+                        'pm': timeframe == 'pm',
+                        'compact': compact
+                    }">
+
+                    <div class="datepicker-calendar">
+                        <div class="calendar-header">
+                            <div class="goback" ng-click="moveBack()" ng-if="pickdate">
+                                <svg width="30" height="30">
+                                    <path fill="none" stroke="#0DAD83" stroke-width="3" d="M19,6 l-9,9 l9,9"/>
+                                </svg>
+                            </div>
+                            <div class="current-month-container">{{ currentViewDate.getFullYear() }} {{ currentMonthName() }}</div>
+                            <div class="goforward" ng-click="moveForward()" ng-if="pickdate">
+                                <svg width="30" height="30">
+                                    <path fill="none" stroke="#0DAD83" stroke-width="3" d="M11,6 l9,9 l-9,9" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="calendar-day-header">
+                            <span ng-repeat="day in days" class="day-label">{{ day.short }}</span>
+                        </div>
+                        <div class="calendar-grid" ng-class="{false: 'no-hover'}[pickdate]">
+                            <div
+                                ng-class="{'no-hover': !day.showday}"
+                                ng-repeat="day in month track by $index"
+                                class="datecontainer"
+                                ng-style="{'margin-left': calcOffset(day, $index)}">
+                                <div class="datenumber" ng-class="{'day-selected': day.selected }" ng-click="selectDate(day)">
+                                    {{ day.daydate }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timepicker" ng-if="picktime == 'true'">
+                        <div ng-class="{'am': timeframe == 'am', 'pm': timeframe == 'pm' }">
+                            <div class="timepicker-container-outer" selectedtime="time" timetravel>
+                                <div class="timepicker-container-inner">
+                                    <div class="timeline-container" ng-mousedown="timeSelectStart($event)" sm-touchstart="timeSelectStart($event)">
+                                        <div class="current-time">
+                                            <div class="actual-time">{{ time }}</div>
+                                        </div>
+                                        <div class="timeline">
+                                        </div>
+                                        <div class="hours-container">
+                                            <div class="hour-mark" ng-repeat="hour in getHours() track by $index"></div>
+                                        </div>
+                                    </div>
+                                    <div class="display-time">
+                                        <div class="decrement-time" ng-click="adjustTime('decrease')">
+                                            <svg width="24" height="24">
+                                                <path stroke="white" stroke-width="2" d="M8,12 h8"/>
+                                            </svg>
+                                        </div>
+                                        <div class="time" ng-class="{'time-active': edittime.active}">
+                                            <input type="text" class="time-input" ng-model="edittime.input" ng-keydown="changeInputTime($event)" ng-focus="edittime.active = true; edittime.digits = [];" ng-blur="edittime.active = false"/>
+                                            <div class="formatted-time">{{ edittime.formatted }}</div>
+                                        </div>
+                                        <div class="increment-time" ng-click="adjustTime('increase')">
+                                            <svg width="24" height="24">
+                                                <path stroke="white" stroke-width="2" d="M12,7 v10 M7,12 h10"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="am-pm-container">
+                                        <div class="am-pm-button" ng-click="changetime('am');">am</div>
+                                        <div class="am-pm-button" ng-click="changetime('pm');">pm</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col s12 m8">
+            <div class="row">
+                <div class="col s12 activity_entry">
+                    <div class="col s12">
+                        <div class="activity-date-header valign-wrapper" ng-hide="true">
+                            <h3 class="activity-date-stamp">{{ activitydate| date:'EEEE MMM d, y h:mm a' }}</h3>
+                        </div>
+                        <div class="row">
+                            <div class="col s12">
+                                <!--<div class="input-field inline">
+                                    <ul id="activity_type" class="dropdown-content">
+                                        <li ng-repeat="c in categories"><a ng-click="activity.category = c">{{c}}</a></li>
+                                    </ul>
+                                    <a class="btn dropdown-button" ng-class="activity.category=='Spent'?'red':'green'" data-activates="activity_type">{{activity.category}}</a>
+                                </div>-->
+                                <div class="input-field inline">
+                                    <select id="activity_type" ng-model="activity.category">
+                                        <option value="" disabled selected>Select</option>
+                                        <option ng-repeat="c in categories" value="{{c}}">{{c}}</option>
+                                    </select>
+                                </div>
+                                <div class="input-field inline">
+                                    <i class="material-icons prefix">$</i>
+                                    <input type="number" id="activity_amount" class="validate" placeholder="Amount" ng-model="activity.amount">
+                                </div>
+                                <span>{{activity.category=='Spent'?'using':'by'}}</span>
+                                <!--<div class="input-field inline">
+                                    <ul id="activity_by" class="dropdown-content">
+                                        <li ng-repeat="pt in payment_types"><a ng-click="activity.by = pt">{{pt}}</a></li>
+                                    </ul>
+                                    <a class="btn dropdown-button blue-grey" data-activates="activity_by">{{activity.by}}</a>
+                                </div> -->
+                                <div class="input-field inline">
+                                    <select id="activity_by" ng-model="activity.by">
+                                        <option ng-repeat="pt in payment_types" value="{{pt}}">{{pt}}</option>
+                                    </select>
+                                </div> 
+                            </div>
+
+                            <div class="col s12">
+                                <span>{{activity.category=='Spent'?'for':'as'}}</span>
+                                <div class="input-field inline">
+                                    <input type="text" id="activity_for" class="validate autocomplete" placeholder="" ng-model="activity.for">
+                                </div>
+                            </div>
+
+                            <div class="col s12">
+                                <span>{{activity.category=='Spent'?'in':'from'}}</span>
+                                <div class="input-field inline">
+                                    <input type="text" id="activity_in" class="validate autocomplete" placeholder="" ng-model="activity.in">
+                                </div>
+                            </div>
+
+                            <div class="col s10">
+                                <div id="activity_items" class="chips chips-activity-items"></div>
+                            </div>
+
+                            <div class="col s2">                        
+                                <a class="btn-floating btn-large waves-effect waves-light green center-align" ng-click="addActivity()">
+                                    <i class="large material-icons">done</i>
+                                </a>
+                            </div>
+
+                        </div>
+        
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12 m8 card-panel blue-grey darken-3">
+                    <h5 class="grey-text text-lighten-2 right-align">
+                        {{ activity.timestamp| date:'EEEE MMM d, y' }}
+                    </h5>
+                    <div class="divider grey-text text-lighten-2"></div>
+                    <div class="grey-text text-lighten-2">
+                        <span>Opening Balance</span>
+                        <h5 class="right-align">
+                            <i class="material-icons tiny">$</i>
+                            {{activity_summary.opening_balance}}
+                        </h5>
+                    </div>
+                    <div class="grey-text text-lighten-2">
+                        <span>Closing Balance</span>
+                        <h5 class="right-align">
+                            <i class="material-icons tiny">$</i>
+                            {{activity_summary.closing_balance}}
+                        </h5>
+                    </div>
+                </div>
+                <div class="col s12 m4">
+                    <div class="col s12 card-panel red darken-2 activity-summary-card">
+                        <span class="red-text text-lighten-3 left-align">
+                            SPENT
+                        </span>
+                        <h5 class="red-text text-lighten-3 right-align">
+                            <i class="material-icons small">$</i>
+                            {{activity_summary.spent}}
+                        </h5>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="col s12 card-panel green darken-2 activity-summary-card">
+                        <span class="green-text text-lighten-3 left-align">
+                            RECEIVED
+                        </span>
+                        <h5 class="green-text text-lighten-3 right-align">
+                            <i class="material-icons small">$</i>
+                            {{activity_summary.received}}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">            
+        <div class="col s12 card-panel">
+            <div class="btn-group center-align">
+                <a class="btn" ng-class="history_period=='day'?'green':'grey'" ng-click="getActivities('','day')">DAY</a>
+                <a class="btn" ng-class="history_period=='week'?'green':'grey'" ng-click="getActivities('','week')">WEEK</a>
+                <a class="btn" ng-class="history_period=='month'?'green':'grey'" ng-click="getActivities('','month')">MONTH</a>
+                <a class="btn" ng-class="history_period=='year'?'green':'grey'" ng-click="getActivities('','year')">YEAR</a>
+            </div>
+        </div>
+    </div>
+    <div class="row">            
+        <div class="col s12 m4 activity_summary_container">
+            <div class="row">
+                <div class="col s12" ng-show="activity_spent_summary.length > 0">
+                    <div class="card-panel amber lighten-5 activity_summary">
+                        <div class="card-content brown-text">
+                            <span class="card-title">Spent Summary</span>
+                        </div>
+                        <div class="divider brown"></div>
+                        <div class="activity_categroy_summary" 
+                            ng-class="{'z-depth-3':asps.active}" 
+                            ng-repeat="asps in activity_spent_summary" 
+                            ng-click="showActivityDetails(asps)" 
+                            ng-mouseover="asps.active=true" 
+                            ng-mouseleave="asps.active=false">
+                            <div class="orange-text text-darken-3 right-align">{{asps.title}} [ {{ asps.amount | currency }} ]</div>
+                            <div class="progress orange lighten-4">
+                                <div class="determinate orange lighten-1" ng-style="{ paddingLeft: '8px', width: asps.percent+'%'}">
+                                    <div class="left-align white-text">{{asps.percent + '%'}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col s12" ng-show="activity_received_summary.length > 0">
+                    <div class="card-panel indigo lighten-5 activity_summary">
+                        <div class="card-content teal-text">
+                            <span class="card-title">Received Summary</span>
+                        </div>
+                        <div class="divider teal"></div>
+                        <div class="activity_categroy_summary" 
+                            ng-class="{'z-depth-3':ars.active}" 
+                            ng-repeat="ars in activity_received_summary" 
+                            ng-click="showActivityDetails(ars)" 
+                            ng-mouseover="ars.active=true" 
+                            ng-mouseleave="ars.active=false">
+                            <div class="teal-text text-darken-3 right-align">{{ ars.title}} [ {{ ars.amount | currency }} ]</div>
+                            <div class="progress teal lighten-4">
+                                <div class="determinate teal lighten-1" ng-style="{ paddingLeft: '8px', width: ars.percent+'%'}">
+                                    <div class="left-align white-text">{{ars.percent + '%'}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col card-panel s12 m8 blue-grey lighten-5 timeline_container" ng-if="activities.length > 0">
+            <section class="timeline" >
+                <div class="activity" ng-class="act.category | lowercase" ng-repeat="act in activities">
+                    <div class="holder">
+                        <span class="timestamp">
+                            <span class="time">{{act.timestamp | date:'dd MMM h:mm a'}}</span>
+                        </span>
+                        <div class="detail" ng-init="act.showAction = true" ng-mouseover="act.showAction = true" ng-mouseleave="act.showAction = true">
+                            <p class="flow-text">
+                                {{ getActivityLog(act)}}  
+                            </p>
+                            <span class="chip z-depth-2 lighten-2" ng-class="act.category == 'Spent' ? 'red':'green'" ng-repeat="item in act.items"> {{ item }}</span>
+                            <div class="row">
+                                <a class="activity-action-btn edit-btn" ng-if="act.showAction" ng-click="editActivity(act)">
+                                    <i class="material-icons">edit</i>
+                                </a>
+                                <a class="activity-action-btn delete-btn" ng-if="act.showAction" ng-click="deleteActivity(act)">
+                                    <i class="material-icons">delete</i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+
+</div>

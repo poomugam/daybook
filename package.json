@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/poomugam/daybook#readme",
   "dependencies": {
+    "async": "^2.1.4",
     "body-parser": "~1.13.1",
     "diskdb": "^0.1.17",
     "express": "~4.14.x",
